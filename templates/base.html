@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Loan Eligibility Evaluator{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/styles.css') }}">
+
+    <style>
+        :root {
+            --bg-color:#111827;
+            --card-bg:#1f2937;
+            --text-color:#f9fafb;
+            --text-muted:#9ca3af;
+            --border-color:#374151;
+            --primary-color:#2563eb;
+            --bg-card:#1f2937;
+            --text-main:#f9fafb;
+            --border:#374151;
+            --muted:#9ca3af;
+        }
+        *{box-sizing:border-box}
+        body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#111827;color:#f9fafb}
+        .app-shell{max-width:1200px;margin:0 auto;padding:2rem}
+        .navbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;background:#1f2937;padding:1rem;border-radius:.5rem;border:1px solid #374151;box-shadow:0 4px 12px rgba(0,0,0,.2);gap:1rem}
+        .nav-links{display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap}
+        .nav-links a{color:#d1d5db;text-decoration:none;font-weight:500;transition:color .2s}
+        .nav-links a:hover,.nav-links a.active{color:#60a5fa}
+        .nav-links a.active{font-weight:700}
+        .swagger-link{background:#2563eb;color:#fff!important;font-weight:700;padding:.6rem 1rem;border-radius:.375rem;text-decoration:none;box-shadow:0 4px 10px rgba(0,0,0,.2);white-space:nowrap}
+        .swagger-link:hover{background:#1d4ed8}
+        .container{max-width:1200px;margin:0 auto;padding:0 0 2rem}
+        .page-header{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;margin-bottom:1.25rem}
+        .page-header h1{font-size:2.15rem;line-height:1.1;margin:.15rem 0 .35rem;font-weight:800}
+        .page-header p{margin:0;color:var(--text-muted)}
+        .eyebrow{color:#60a5fa;font-size:.75rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+        .status-pill{display:inline-flex;align-items:center;padding:.5rem .8rem;border-radius:999px;border:1px solid #475569;background:#1e293b;color:#cbd5e1;font-size:.82rem;white-space:nowrap}
+        .status-pill.ok{background:#052e16;border-color:#166534;color:#86efac}
+        .status-pill.bad{background:#450a0a;border-color:#991b1b;color:#fca5a5}
+        .card,.status-card{background:#1f2937;border:1px solid #374151;border-radius:.65rem;box-shadow:0 8px 20px rgba(0,0,0,.12)}
+        .card-pad,.status-card{padding:1.25rem}
+        .metric-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1rem;margin-bottom:1.25rem}
+        .metric-card{background:#1f2937;border:1px solid #374151;border-radius:.65rem;padding:1rem;text-align:left;min-height:118px}
+        .metric-card .label{color:#cbd5e1;font-size:.88rem}
+        .metric-card .value{font-size:1.85rem;font-weight:800;margin-top:.45rem;line-height:1}
+        .metric-card .help{color:#9ca3af;font-size:.74rem;margin-top:.55rem}
+        .btn{background:#2563eb;color:#fff;border:0;padding:.6rem 1.2rem;border-radius:6px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+        .btn:hover{background:#1d4ed8}
+        .btn:disabled{opacity:.6;cursor:not-allowed}
+        .btn.danger{background:#dc2626}.btn.danger:hover{background:#b91c1c}
+        .table{width:100%;border-collapse:collapse;margin-top:1rem}
+        .table th,.table td{padding:.75rem;border-bottom:1px solid #374151;text-align:left}
+        .hidden{display:none!important}
+        .tip,.tooltip-wrap{position:relative;cursor:help}
+        .tip[data-tip]::after,.tooltip-wrap[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%) translateY(4px);width:max-content;max-width:320px;padding:.55rem .7rem;background:#020617;color:#e5e7eb;border:1px solid #475569;border-radius:7px;font-size:.72rem;line-height:1.35;font-weight:500;white-space:normal;text-align:left;box-shadow:0 10px 25px rgba(0,0,0,.35);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s ease,transform .15s ease;z-index:10000}
+        .tip[data-tip]:hover::after,.tooltip-wrap[data-tip]:hover::after{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+        .two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem}
+        .three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.25rem}
+        .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+        @media(max-width:900px){.metric-grid{grid-template-columns:repeat(3,1fr)}.two-col,.three-col{grid-template-columns:1fr}}
+        @media(max-width:680px){.app-shell{padding:1rem}.navbar{align-items:flex-start;flex-direction:column}.metric-grid{grid-template-columns:1fr 1fr}.detail-grid{grid-template-columns:1fr}.page-header{align-items:flex-start;flex-direction:column}}
+        #google_translate_element select{background:#1f2937;color:#f9fafb;border:1px solid #374151;padding:.4rem .8rem;border-radius:6px}
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+<div class="app-shell">
+    <nav class="navbar">
+        <div class="nav-links">
+            <a href="/" class="{% if request.path == '/' %}active{% endif %} tip" data-tip="Return to the loan application form.">Home</a>
+            <a href="/dashboard" class="{% if request.path == '/dashboard' %}active{% endif %} tip" data-tip="View model performance, configuration and evaluation results.">Model Dashboard</a>
+            <a href="/model" class="{% if request.path == '/model' %}active{% endif %} tip" data-tip="View dataset samples, selected features and model management controls.">Model Details</a>
+            <a href="/api" class="{% if request.path == '/api' %}active{% endif %} tip" data-tip="View all REST API endpoints and their current status.">API Status</a>
+            <a href="/logs" class="{% if request.path == '/logs' %}active{% endif %} tip" data-tip="View application logs and filter them by severity.">Application Logs</a>
+        </div>
+        {% if request.path == '/api' %}
+        <a href="/apidocs" target="_blank" rel="noopener" class="swagger-link tip" data-tip="Open the interactive Swagger/OpenAPI documentation.">Swagger Docs</a>
+        {% endif %}
+    </nav>
+    <main>{% block content %}{% endblock %}</main>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

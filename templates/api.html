@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}API Status{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div>
+            <div class="eyebrow">API STATUS</div>
+            <h1>API Status</h1>
+            <p>Available API endpoints and their current status.</p>
+        </div>
+    </div>
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+            <h1 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-3" title="A live registry of the REST endpoints exposed by this application.">API Endpoints Registry</h1>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-700 text-gray-300 uppercase text-xs tracking-wider">
+                            <th class="p-3" title="HTTP method used by the endpoint.">Method</th>
+                            <th class="p-3" title="URL path used to access the endpoint.">Endpoint</th>
+                            <th class="p-3" title="What the endpoint does.">Description</th>
+                            <th class="p-3" title="Whether the endpoint is currently available.">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="endpoints-table" class="divide-y divide-gray-700 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+</div>
+<script>
+fetch('/api-status')
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.getElementById('endpoints-table');
+        tbody.innerHTML = '';
+        data.sort((a,b) => {
+            const order = {POST: 0, GET: 1};
+            return (order[a.method] ?? 9) - (order[b.method] ?? 9);
+        });
+        data.forEach(ep => {
+            const methodColor = ep.method === 'POST'
+                ? 'background:#14532d;color:#86efac;'
+                : 'background:#1e3a8a;color:#93c5fd;';
+            const statusColor = ep.status === 'Online' ? '#4ade80' : '#fbbf24';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-3"><span style="display:inline-block;padding:.25rem .5rem;border-radius:.25rem;font-size:.75rem;font-weight:700;${methodColor}">${ep.method}</span></td>
+                <td class="p-3 font-mono" style="color:#60a5fa">${ep.endpoint}</td>
+                <td class="p-3" style="color:#d1d5db">${ep.description || ''}</td>
+                <td class="p-3 font-semibold" style="color:${statusColor}">${ep.status}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    })
+    .catch(err => {
+        const tbody = document.getElementById('endpoints-table');
+        tbody.innerHTML = `<tr><td colspan="4" style="padding:1rem;color:#f87171">Unable to load API status: ${err.message}</td></tr>`;
+    });
+</script>
+{% endblock %}

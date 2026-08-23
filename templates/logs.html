@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="margin: 0;">Application Logs</h1>
+            <p style="color: var(--text-muted); margin: 0.25rem 0 0 0; font-size: 0.9rem;">Application events, warnings and errors with severity filtering.</p>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <label for="log-file-select" style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Log File:</label>
+            <select id="log-file-select" onchange="fetchLogs()" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.5rem 0.85rem; border-radius: 8px; font-weight: 600; outline: none; cursor: pointer;">
+                <option value="app" style="color: #0f172a; background-color: #ffffff;">app.log (General Info)</option>
+                <option value="model" style="color: #0f172a; background-color: #ffffff;">model.log (Model Execution)</option>
+                <option value="http" style="color: #0f172a; background-color: #ffffff;">http.log (API & HTML Requests)</option>
+            </select>
+
+            <label for="log-type-filter" style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Filter:</label>
+            <select id="log-type-filter" onchange="filterLogs()" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.5rem 0.85rem; border-radius: 8px; font-weight: 600; outline: none; cursor: pointer;">
+                <option value="ALL" style="color: #0f172a; background-color: #ffffff;">ALL LOGS</option>
+                <option value="HTTP" style="color: #0f172a; background-color: #ffffff;">HTTP REQUESTS</option>
+                <option value="MODEL" style="color: #0f172a; background-color: #ffffff;">MODEL EXECUTION</option>
+                <option value="WARNING">WARNINGS</option>
+                <option value="ERROR" style="color: #0f172a; background-color: #ffffff;">ERRORS & TRACES</option>
+                <option value="INFO" style="color: #0f172a; background-color: #ffffff;">GENERAL INFO</option>
+            </select>
+
+            <button onclick="fetchLogs()" class="btn" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;">Refresh</button>
+            <button onclick="downloadActiveLog()" class="btn" style="padding: 0.5rem 0.85rem; font-size: 0.85rem; background: #0ea5e9;">Download Active</button>
+            <button onclick="downloadAllLogs()" class="btn" style="padding: 0.5rem 0.85rem; font-size: 0.85rem; background: #10b981;">Download All (Zip)</button>
+        </div>
+    </div>
+
+    <div class="status-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-color);">
+        <div id="log-console" style="background: #0f172a; color: #cbd5e1; font-family: monospace; font-size: 0.85rem; padding: 1.25rem; height: 500px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; line-height: 1.6;">
+            Loading log entries...
+        </div>
+    </div>
+</div>
+
+<script>
+    let rawLogLines = [];
+
+    async function fetchLogs() {
+        const consoleEl = document.getElementById('log-console');
+        const selectedFile = document.getElementById('log-file-select').value;
+        try {
+            const res = await fetch(`/get-log?type=${selectedFile}`);
+            const data = await res.json();
+            rawLogLines = data.logs || [];
+            filterLogs();
+        } catch (err) {
+            consoleEl.innerHTML = `<span style="color: #f87171;">Failed to fetch logs: ${escapeHtml(err.message)}</span>`;
+        }
+    }
+
+    function filterLogs() {
+        const consoleEl = document.getElementById('log-console');
+        const filterValue = document.getElementById('log-type-filter').value;
+
+        if (rawLogLines.length === 0) {
+            consoleEl.innerHTML = '<span style="color: #64748b;">No log records found.</span>';
+            return;
+        }
+
+        const filtered = rawLogLines.filter(line => {
+            if (filterValue === 'ALL') return true;
+            if (filterValue === 'WARNING') return /\bWARN(?:ING)?\b/i.test(line);
+            if (filterValue === 'ERROR') return /\bERROR\b/i.test(line);
+            if (filterValue === 'INFO') return /\bINFO\b/i.test(line);
+            return line.includes(`[${filterValue}]`);
+        });
+
+        if (filtered.length === 0) {
+            consoleEl.innerHTML = `<span style="color: #64748b;">No log records matching filter [${filterValue}].</span>`;
+            return;
+        }
+
+        consoleEl.innerHTML = filtered.map(line => styleLogLine(line)).join('\n');
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function styleLogLine(line) {
+        const escaped = escapeHtml(line);
+        const upper = line.toUpperCase();
+        if (/\bERROR\b/.test(upper) || upper.includes('[ERROR]')) {
+            return `<span style="color:#f87171;font-weight:700;">${escaped}</span>`;
+        }
+        if (/\bWARNING\b/.test(upper) || /\bWARN\b/.test(upper) || upper.includes('[WARNING]') || upper.includes('[WARN]')) {
+            return `<span style="color:#fbbf24;font-weight:700;">${escaped}</span>`;
+        }
+        if (upper.includes('[MODEL]') || upper.includes('MODEL EXECUTION')) {
+            return `<span style="color:#38bdf8;font-weight:700;">${escaped}</span>`;
+        }
+        if (upper.includes('[HTTP]') || upper.includes('HTTP ')) {
+            return `<span style="color:#34d399;font-weight:700;">${escaped}</span>`;
+        }
+        if (/\bINFO\b/.test(upper) || upper.includes('[INFO]')) {
+            return `<span style="color:#4ade80;">${escaped}</span>`;
+        }
+        return `<span style="color:#e2e8f0;">${escaped}</span>`;
+    }
+
+    function downloadActiveLog() {
+        const selectedFile = document.getElementById('log-file-select').value;
+        window.location.href = `/download-log/${selectedFile}`;
+    }
+
+    function downloadAllLogs() {
+        window.location.href = '/download-log/all';
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchLogs);
+</script>
+{% endblock %}

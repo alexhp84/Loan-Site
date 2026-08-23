@@ -1,0 +1,144 @@
+:root {
+    --glass-bg: rgba(255,255,255,.07);
+    --glass-border: rgba(255,255,255,.12);
+    --shadow: 0 8px 32px rgba(0,0,0,.25);
+    --radius: 1rem;
+    --text: #e0e0e0;               /* readable on dark gradient */
+    --accent: #5ab1ef;              /* soft turquoise for links / buttons */
+    --accent-hover: #4195d0;
+}
+[data-theme="dark"] {
+    --glass-bg: rgba(0,0,0,.15);
+    --text: #fafafa;
+}
+html,body{
+    height:100%;margin:0;
+    font-family:'Inter',sans-serif;
+    background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+    background-size:400% 400%;
+    animation:gradientMove 20s ease infinite;
+    color:var(--text);
+}
+@keyframes gradientMove{
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+.glass{
+    backdrop-filter:blur(12px);
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+}
+.app-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;}
+.logo{font-size:1.4rem;font-weight:600;color:var(--accent);}
+.nav-links{display:flex;gap:1.5rem;}
+.nav-item{display:flex;align-items:center;gap:.4rem;color:var(--accent);text-decoration:none;transition:color .2s;}
+.nav-item:hover{color:var(--accent-hover);}
+.btn-primary{background:var(--accent);color:#fff;border:none;padding:.8rem 1.2rem;border-radius:.6rem;cursor:pointer;transition:background .2s;}
+.btn-primary:hover{background:var(--accent-hover);}
+.btn-secondary{background:rgba(255,255,255,.07);color:var(--text);border:none;padding:.8rem 1.2rem;border-radius:.6rem;cursor:pointer;transition:background .2s;}
+.btn-secondary:hover{background:rgba(255,255,255,.12);}
+.ripple::after{content:"";position:absolute;left:50%;top:50%;width:0;height:0;background:rgba(255,255,255,.3);border-radius:50%;transform:translate(-50%,-50%);transition:width .4s ease-out,height .4s ease-out;}
+.ripple:active::after{width:200px;height:200px;transition:0s;}
+.hidden{display:none;}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;}
+.card{padding:1.5rem;}
+.result-screen{margin-top:2rem;padding:2rem;text-align:center;}
+
+/* ---------------------------------------------------------
+   Modern glass‑morphism, responsive grid, & RTL helpers
+   --------------------------------------------------------- */
+
+/* Logical spacing – works for LTR & RTL */
+.field{display:flex;flex-direction:column;margin-block:0.5rem;}
+
+/* Responsive two‑column grid (auto‑fit for graceful fallback) */
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(250px,1fr));
+  gap:1.5rem;
+}
+
+/* When the document direction is RTL, the grid follows it */
+:dir(rtl) .form-grid{direction:rtl;}
+
+/* Button lift on hover */
+.btn-primary{
+  transition:background .2s,transform .2s;
+}
+.btn-primary:hover{
+  transform:translateY(-2px);
+}
+
+/* Align the OK / Retry actions – left side when RTL */
+.actions{justify-content:flex-end;}
+:dir(rtl) .actions{justify-content:flex-start;}
+
+/* Inputs automatically follow the document direction */
+input, select, textarea{text-align:start;}
+
+/* Slightly larger border‑radius for a more modern feel */
+:root{--radius:1.2rem;}
+
+/* Keep result screens in the glass style */
+.result-screen{
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  box-shadow:var(--shadow);
+}
+
+/* ---------------------------------------------------------
+   Responsive grid + RTL helpers (added by fix‑script)
+   --------------------------------------------------------- */
+.field{display:flex;flex-direction:column;margin-block:0.5rem;}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:1.5rem;
+}
+:dir(rtl) .form-grid{direction:rtl;}
+.actions{justify-content:flex-end;}
+:dir(rtl) .actions{justify-content:flex-start;}
+input,select,textarea{text-align:start;}
+/* lift on hover for primary button */
+.btn-primary{transition:background .2s,transform .2s;}
+.btn-primary:hover{transform:translateY(-2px);}
+
+/* ---------------------------------------------------------
+   Modern glass‑morphism + responsive cards + RTL helpers
+   --------------------------------------------------------- */
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:1.5rem;
+}
+.card{
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:1.5rem;
+}
+.result-screen{
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:1.5rem;
+}
+.btn-primary,
+.btn-secondary{
+  cursor:pointer;
+  border:none;
+  border-radius:.6rem;
+  padding:.8rem 1.2rem;
+}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-hover);}
+.btn-secondary{background:rgba(255,255,255,.07);color:var(--text);}
+.btn-secondary:hover{background:rgba(255,255,255,.12);}
+
+/* RTL – everything follows the document direction */
+:dir(rtl){text-align:right;}

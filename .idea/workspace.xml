@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="8c101e0c-455c-459e-bd76-73cc639005fe" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../../.idea/Python.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/Loan Site.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/logs.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/Homework-Lucky-Numbers/.idea/Homework-Lucky-Numbers.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/PythonProject/.idea/PythonProject.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/SQL-Python/.idea/SQL-Python.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/SQL-Python/Eurovision/.idea/Eurovision.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/Task 15-03/.idea/Task 15-03.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/Task-25-02/.idea/Task-25-02.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/Task-25-03/.idea/Task-25-03.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/Test 31-05/.idea/Test 31-05.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/ask_the_robot/.idea/ask_the_robot.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Python Basics/leetcode_answers/.idea/leetcode_answers.iml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="28" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.5931998546488781" />
+      <entry key="MS500" value="4.655576415629978" />
+      <entry key="S2" value="13.638668957219384" />
+      <entry key="S5" value="28.44201568094734" />
+      <entry key="S10" value="50.82380793008363" />
+      <entry key="S30" value="104.58836533982307" />
+      <entry key="S60" value="134.09472284947125" />
+      <entry key="M2" value="162.01868600580679" />
+      <entry key="M5" value="214.55835466276702" />
+      <entry key="M10" value="254.52103376133851" />
+      <entry key="M15" value="272.80866601809777" />
+      <entry key="M30" value="294.4168887965197" />
+      <entry key="H1" value="306.66589855697305" />
+      <entry key="H2" value="313.19113987416495" />
+      <entry key="H4" value="316.5593150700605" />
+      <entry key="D1" value="319.4214475110299" />
+      <entry key="W1" value="319.91722370621034" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="0.0" />
+      <entry key="M15" value="0.0" />
+      <entry key="M30" value="0.0" />
+      <entry key="H1" value="0.0" />
+      <entry key="H2" value="0.0" />
+      <entry key="H4" value="0.0" />
+      <entry key="D1" value="0.0" />
+      <entry key="W1" value="0.0" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="1.5265746435512082" />
+      <entry key="MS500" value="4.609162549036359" />
+      <entry key="S2" value="13.60433750532983" />
+      <entry key="S5" value="28.413319597186693" />
+      <entry key="S10" value="50.79714997973038" />
+      <entry key="S30" value="104.56899245106844" />
+      <entry key="S60" value="134.08202860865111" />
+      <entry key="M2" value="162.01054129499045" />
+      <entry key="M5" value="214.55337492767342" />
+      <entry key="M10" value="254.51784896940583" />
+      <entry key="M15" value="272.80632829706445" />
+      <entry key="M30" value="294.41559260565316" />
+      <entry key="H1" value="306.6652142659801" />
+      <entry key="H2" value="313.1907880750527" />
+      <entry key="H4" value="316.55913667747876" />
+      <entry key="D1" value="319.42141742572636" />
+      <entry key="W1" value="319.9172193995675" />
+    </decayedShown>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3IEJ2G2FAPlEecbKzb9gIy7vL19" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.train_model.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/alexpatnick/Documents/Course/AI/Python/Maths/Loan Site",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "ml.llm.LLMConfigurable",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-c59985aa861c-c2ffad84badb-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.24374.152" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="8c101e0c-455c-459e-bd76-73cc639005fe" name="Changes" comment="" />
+      <created>1787323585636</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1787323585636</updated>
+      <workItem from="1787469787595" duration="2580000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

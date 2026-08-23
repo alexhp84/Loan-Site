@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Loan Application Assessment{% endblock %}
+{% block head %}<style>
+.loan-form-card{max-width:100%}.loan-input{width:100%;background:#374151;border:1px solid #4b5563;border-radius:6px;padding:.62rem .75rem;color:#fff;outline:none}.loan-input:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.18)}.submit-application{width:100%;background:#2563eb;color:#fff;border:0;border-radius:6px;padding:.7rem 1rem;font-weight:700;cursor:pointer;margin-top:1rem}.submit-application:hover{background:#1d4ed8}
+.result-modal{position:fixed;inset:0;background:rgba(2,6,23,.8);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:3000}.result-box{width:min(430px,94vw);background:#1f2937;border:1px solid #475569;border-radius:14px;padding:1.6rem;text-align:center;box-shadow:0 25px 70px rgba(0,0,0,.5)}.result-icon{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:42px;font-weight:800}.result-icon.approved{background:#064e3b;color:#4ade80;border:2px solid #22c55e}.result-icon.denied{background:#450a0a;color:#f87171;border:2px solid #ef4444}.result-close{margin-top:1.25rem;width:100%;background:#2563eb;color:#fff;border:0;border-radius:7px;padding:.7rem 1rem;font-weight:700;cursor:pointer}.result-details{margin-top:1rem;padding:1rem;background:#111827;border:1px solid #374151;border-radius:8px;text-align:left}.hidden{display:none!important}
+</style>{% endblock %}
+{% block content %}
+<div class="container" style="max-width:900px;margin:0 auto;">
+    <div class="page-header">
+        <div>
+            <div class="eyebrow">LOAN APPLICATION</div>
+            <h1>Loan Application Assessment</h1>
+            <p>Enter the applicant and loan details to evaluate the application with the active model.</p>
+        </div>
+    </div>
+    <div class="card card-pad loan-form-card">
+        <form id="loan-form" class="space-y-4 tip" data-tip="Complete the required fields and submit the application for evaluation.">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="block text-sm font-medium text-gray-300 mb-1">Person Income</label><input type="number" name="person_income" required class="loan-input tip" data-tip="Applicant annual income used by the model." placeholder="50000"></div>
+                <div><label class="block text-sm font-medium text-gray-300 mb-1">Loan Amount</label><input type="number" name="loan_amnt" required class="loan-input tip" data-tip="Amount of the requested loan." placeholder="10000"></div>
+                <div><label class="block text-sm font-medium text-gray-300 mb-1">Loan Interest Rate (%)</label><input type="number" step="0.1" name="loan_int_rate" required class="loan-input tip" data-tip="Interest rate applied to the requested loan." placeholder="11.5"></div>
+                <div><label class="block text-sm font-medium text-gray-300 mb-1">Loan Percent Income</label><input type="number" step="0.01" name="loan_percent_income" required class="loan-input tip" data-tip="Loan amount expressed as a proportion of annual income." placeholder="0.20"></div>
+                <div><label class="block text-sm font-medium text-gray-300 mb-1">Credit Score</label><input type="number" name="credit_score" required class="loan-input tip" data-tip="Applicant credit score used by the model." placeholder="700"></div>
+                <div><label class="block text-sm font-medium text-gray-300 mb-1">Home Ownership</label><select name="person_home_ownership" class="loan-input tip" data-tip="Applicant home ownership category."><option value="RENT">RENT</option><option value="MORTGAGE">MORTGAGE</option><option value="OWN">OWN</option><option value="OTHER">OTHER</option></select></div>
+            </div>
+            <div><label class="block text-sm font-medium text-gray-300 mb-1">Previous Loan Defaults on File</label><select name="previous_loan_defaults_on_file" class="loan-input tip" data-tip="Whether previous loan defaults are recorded for the applicant."><option value="No">No</option><option value="Yes">Yes</option></select></div>
+            <button type="submit" class="submit-application tip" data-tip="Send the completed application to the active model for assessment.">Submit Application</button>
+        </form>
+        <div id="result-container" class="mt-6"></div>
+<div id="result-modal" class="result-modal hidden" onclick="closeResultModal(event)"><div class="result-box" onclick="event.stopPropagation()"><div id="result-icon" class="result-icon"></div><h2 id="result-title" class="text-2xl font-bold"></h2><div id="result-details" class="result-details"></div><button class="result-close tip" data-tip="Close the assessment result and return to the application form." onclick="closeResultModal()">Close</button></div></div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+        document.getElementById('loan-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.innerHTML = '<p class="text-gray-400">Evaluating application through model pipeline and margin analysis...</p>';
+
+            try {
+                const response = await fetch('/margin', { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    const isDenied = result.prediction_code === 1;
+                    const icon = document.getElementById('result-icon');
+                    icon.className = `result-icon ${isDenied ? 'denied' : 'approved'}`;
+                    icon.textContent = isDenied ? '×' : '✓';
+                    document.getElementById('result-title').textContent = isDenied ? 'Loan Denied' : 'Loan Approved';
+                    document.getElementById('result-details').innerHTML = `
+                        <p class="text-lg font-semibold">Status: <span class="${isDenied ? 'text-red-400' : 'text-green-400'}">${result.prediction}</span></p>
+                        <p class="text-sm text-gray-300 mt-1">Prediction Code: <span class="font-mono">${result.prediction_code}</span> (${isDenied ? 'Denied = 1' : 'Approved = 0'})</p>
+                        <p class="text-sm text-gray-300 mt-1">Decision Margin: <span class="font-mono">${Number(result.margin).toFixed(4)}</span></p>
+                    `;
+                    document.getElementById('result-modal').classList.remove('hidden');
+                } else {
+                    resultContainer.innerHTML = `<p class="text-red-400 font-semibold">Error: ${result.message}</p>`;
+                }
+            } catch (err) {
+                resultContainer.innerHTML = `<p class="text-red-400 font-semibold">Failed to connect to backend server.</p>`;
+            }
+        });
+
+        function closeResultModal(e) {
+            if (!e || e.target.id === 'result-modal') document.getElementById('result-modal').classList.add('hidden');
+        }
+</script>
+{% endblock %}

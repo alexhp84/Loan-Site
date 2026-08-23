@@ -1,0 +1,6 @@
+Flask==2.3.*
+flasgger==0.9.*
+pandas==2.2.*
+scikit-learn==1.5.*
+matplotlib==3.9.*
+numpy==2.0.*

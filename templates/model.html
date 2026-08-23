@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <div>
+            <div class="eyebrow">DATA & TRAINING</div>
+            <h1 class="tip" data-tip="Dataset inspection and model retraining controls. This page works with the active CSV and PKL files.">Model Details</h1>
+            <p>Inspect the active dataset, model features and manage retraining.</p>
+        </div>
+        <div class="actions">
+            <a class="btn tip" href="/download-model" data-tip="Download the currently active trained loan approval PKL model.">Download PKL</a>
+            <button class="btn danger tip" id="clear-btn" data-tip="Delete the current PKL and retrain a fresh model from the existing CSV dataset." onclick="clearAndRetrain()">Clear & Retrain</button>
+            <button class="btn tip" id="upload-btn" data-tip="Choose a new CSV, optionally map its columns, replace the existing dataset and retrain the model." onclick="openUpload()">Upload New Data</button>
+        </div>
+    </div>
+
+    <div id="progress" class="progress-card hidden tip" data-tip="Shows the current stage of a retraining or dataset replacement operation.">
+        <div class="progress-top"><strong id="progress-title">Working...</strong><span id="progress-percent">0%</span></div>
+        <div class="progress-track"><div id="progress-bar"></div></div>
+        <div id="progress-detail" class="progress-detail">Preparing operation...</div>
+    </div>
+
+    <div class="summary-grid">
+        <button class="summary-card tip" data-tip="Shows information about the active CSV dataset, including its location and preview." onclick="openInfo('dataset')"><span>Dataset</span><strong id="dataset-name">loan_data.csv</strong><small id="dataset-size">Loading...</small></button>
+        <button class="summary-card tip" data-tip="Shows the seven fields currently expected by the trained model." onclick="openInfo('features')"><span>Model Features</span><strong>7</strong><small>Click for schema</small></button>
+        <button class="summary-card tip" data-tip="Shows the target field and the meaning of its class values: 0 = Rejected and 1 = Approved." onclick="openInfo('target')"><span>Target</span><strong>loan_status</strong><small>0 = Rejected · 1 = Approved</small></button>
+    </div>
+
+    <section class="card">
+        <div class="section-head"><div><h2>Model Features</h2><p>Click a feature to see what the model uses it for.</p></div></div>
+        <div id="feature-list" class="feature-list" data-tooltip-context="Each feature button gets its own explanation when loaded."></div>
+    </section>
+
+    <section class="card table-card">
+        <div class="section-head"><div><h2>Sample Dataset Preview</h2><p>First 10 rows from the active <code>loan_data.csv</code>. Click a row to inspect it.</p></div><button class="btn small tip" data-tip="Reload the first 10 rows from the active CSV without retraining the model." onclick="loadData()">Refresh</button></div>
+        <div class="table-wrap"><table class="table" id="sample-table"><thead></thead><tbody><tr><td>Loading...</td></tr></tbody></table></div>
+    </section>
+</div>
+
+<div id="modal" class="modal hidden" onclick="closeModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <button class="modal-close tip" data-tip="Close this information window." onclick="closeModal()">×</button>
+        <div id="modal-content"></div>
+    </div>
+</div>
+
+<div id="upload-modal" class="modal hidden" onclick="closeUpload(event)">
+    <div class="modal-box upload-box" onclick="event.stopPropagation()">
+        <button class="modal-close tip" data-tip="Close the upload window without changing the dataset or model." onclick="closeUpload()">×</button>
+        <h2>Upload New Dataset</h2>
+        <p class="muted">The existing CSV and PKL are replaced only after the uploaded dataset passes validation.</p>
+        <label class="field-label tip" data-tip="Select the replacement CSV dataset. It must contain the model features and loan_status target.">CSV file</label>
+        <input id="csv-file" class="tip" data-tip="Select a CSV file containing the model features and loan_status target column." type="file" accept=".csv" onchange="inspectFile()">
+        <div id="file-info" class="file-info">Select a CSV file to begin.</div>
+
+        <div class="mapping-options">
+            <label class="tip" data-tip="Use the standard column names expected by the current training pipeline."><input type="radio" name="mapping" value="default" checked onchange="toggleMapping()"> Default mapping</label>
+            <label class="tip" data-tip="Map differently named CSV columns to the model fields before training."><input type="radio" name="mapping" value="custom" onchange="toggleMapping()"> Custom column mapping</label>
+        </div>
+        <div id="mapping-area" class="mapping-area hidden">
+            <h3 class="tip" data-tip="Map each required model field to the corresponding column in the uploaded CSV.">Map CSV columns to model schema</h3>
+            <div id="mapping-list"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn ghost tip" data-tip="Close the upload window without changing the existing dataset or model." onclick="closeUpload()">Cancel</button>
+            <button class="btn tip" id="upload-submit" data-tip="Upload the selected CSV, validate/map its columns, replace the active dataset and train a new PKL." onclick="uploadAndRetrain()">Upload & Retrain</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.tip{position:relative;cursor:help}.tip[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%) translateY(4px);width:max-content;max-width:320px;padding:.6rem .75rem;border:1px solid #475569;border-radius:7px;background:#020617;color:#e2e8f0;font-size:.72rem;font-weight:500;line-height:1.4;text-align:left;white-space:normal;box-shadow:0 10px 25px rgba(0,0,0,.35);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s ease,transform .15s ease;z-index:100}.tip[data-tip]:hover::after{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}.summary-card.tip[data-tip]::after{bottom:calc(100% + 8px)}.btn.tip[data-tip]::after{bottom:calc(100% + 8px)}
+
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;margin-bottom:1.5rem}.page-head h1{margin:.15rem 0;font-size:2.25rem}.page-head p{color:var(--text-muted);margin:0}.eyebrow{color:#60a5fa;font-size:.75rem;font-weight:800;letter-spacing:.14em}.actions{display:flex;gap:.65rem;flex-wrap:wrap}
+.btn{border:1px solid #3b82f6;background:#2563eb;color:#fff;padding:.65rem 1rem;border-radius:7px;font-weight:700;cursor:pointer}.btn.danger{background:#b91c1c;border-color:#ef4444}.btn.ghost{background:transparent;border-color:#475569}.btn.small{padding:.45rem .7rem;font-size:.78rem}.btn:disabled{opacity:.5;cursor:not-allowed}
+.card{background:#172235;border:1px solid #334155;border-radius:10px;padding:1.35rem;margin-bottom:1.25rem}.section-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem}.section-head h2{margin:0;font-size:1.15rem}.section-head p{margin:.25rem 0 0;color:#94a3b8;font-size:.82rem}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem}.summary-card{text-align:left;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:9px;padding:1rem;cursor:pointer}.summary-card:hover{border-color:#3b82f6}.summary-card span{display:block;color:#94a3b8;font-size:.75rem}.summary-card strong{display:block;font-size:1.05rem;margin:.25rem 0}.summary-card small{color:#64748b}
+.feature-list{display:flex;flex-wrap:wrap;gap:.55rem}.feature{background:#172f65;border:1px solid #315da8;color:#dbeafe;border-radius:999px;padding:.5rem .75rem;cursor:pointer;font-size:.78rem}.feature:hover{background:#214585}
+.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;font-size:.78rem}.table th,.table td{padding:.65rem;border-bottom:1px solid #263449;text-align:left;white-space:nowrap}.table th{color:#93c5fd;background:#152033;position:sticky;top:0}.table tbody tr{cursor:pointer}.table tbody tr:hover{background:#1e293b}
+.progress-card{background:#172235;border:1px solid #334155;border-radius:10px;padding:1rem;margin-bottom:1.25rem}.hidden{display:none!important}.progress-top{display:flex;justify-content:space-between;margin-bottom:.5rem}.progress-track{height:12px;background:#0f172a;border:1px solid #334155;border-radius:999px;overflow:hidden}.progress-track div{height:100%;width:0;background:#3b82f6;transition:width .35s ease}.progress-detail{color:#94a3b8;font-size:.78rem;margin-top:.45rem}
+.modal{position:fixed;inset:0;background:rgba(2,6,23,.78);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:1000}.modal-box{position:relative;width:min(560px,95vw);max-height:88vh;overflow:auto;background:#172235;border:1px solid #475569;border-radius:12px;padding:1.4rem;box-shadow:0 20px 60px rgba(0,0,0,.4)}.modal-close{position:absolute;right:12px;top:8px;background:none;border:0;color:#94a3b8;font-size:1.8rem;cursor:pointer}.modal-box h2{margin-top:0}.modal-box h3{font-size:.95rem}.muted{color:#94a3b8;font-size:.82rem}.field-label{display:block;font-weight:700;font-size:.8rem;margin:.9rem 0 .4rem}.upload-box input[type=file]{width:100%;box-sizing:border-box;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:7px;padding:.6rem}.file-info{color:#94a3b8;font-size:.75rem;margin:.5rem 0}.mapping-options{display:flex;gap:1rem;margin:1rem 0;font-size:.8rem}.mapping-area{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:1rem}.mapping-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;align-items:center;margin:.55rem 0}.mapping-row label{font-size:.76rem;font-weight:700}.mapping-row select{background:#172235;color:#e2e8f0;border:1px solid #475569;border-radius:5px;padding:.4rem}.modal-actions{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.2rem}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.detail-grid div{background:#0f172a;border:1px solid #263449;border-radius:7px;padding:.7rem}.detail-grid b{display:block;color:#94a3b8;font-size:.72rem}.detail-grid span{display:block;margin-top:.25rem}
+@media(max-width:750px){.summary-grid{grid-template-columns:1fr}.page-head{align-items:flex-start;flex-direction:column}.mapping-row,.detail-grid{grid-template-columns:1fr}}
+</style>
+
+<script>
+const MODEL_SCHEMA=[
+"person_income","loan_amnt","loan_int_rate","loan_percent_income","credit_score",
+"person_home_ownership","previous_loan_defaults_on_file"
+];
+const FEATURE_INFO={
+person_income:["Person Income","Applicant income used as a numeric model feature."],
+loan_amnt:["Loan Amount","Requested loan amount."],
+loan_int_rate:["Loan Interest Rate","Interest rate associated with the loan."],
+loan_percent_income:["Loan Percent Income","Loan amount expressed as a proportion of income."],
+credit_score:["Credit Score","Applicant credit score."],
+person_home_ownership:["Home Ownership","Applicant home ownership category."],
+previous_loan_defaults_on_file:["Previous Loan Defaults","Whether previous loan defaults are recorded."]
+};
+let detectedHeaders=[];
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function loadFeatures(){
+    document.getElementById('feature-list').innerHTML=MODEL_SCHEMA.map(f=>`<button class="feature tip" data-tip="Inspect what the ${esc(f)} field means and how it is used by the model." onclick="openFeature('${f}')">${esc(f)}</button>`).join('');
+}
+
+async function loadData(){
+    const res=await fetch('/data-preview');const d=await res.json();
+    document.getElementById('dataset-name').textContent='loan_data.csv';
+    document.getElementById('dataset-size').textContent=`${(d.row_count||0).toLocaleString()} rows · ${d.column_count||0} columns`;
+    const head=document.querySelector('#sample-table thead'),body=document.querySelector('#sample-table tbody');
+    if(!d.headers?.length){head.innerHTML='<tr><th>No Data</th></tr>';body.innerHTML='<tr><td>No dataset available.</td></tr>';return;}
+    head.innerHTML='<tr>'+d.headers.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr>';
+    body.innerHTML=d.rows.map((row,i)=>`<tr onclick='openRow(${JSON.stringify(row)},${JSON.stringify(d.headers)},${i})'>${row.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('');
+}
+
+function openFeature(name){
+    const [title,desc]=FEATURE_INFO[name]||[name,'Model feature.'];
+    document.getElementById('modal-content').innerHTML=`<h2>${esc(title)}</h2><p class="muted">${esc(desc)}</p><div class="detail-grid"><div><b>Field</b><span>${esc(name)}</span></div><div><b>Type</b><span>${MODEL_SCHEMA.includes(name)&&['person_income','loan_amnt','loan_int_rate','loan_percent_income','credit_score'].includes(name)?'Numeric':'Categorical'}</span></div></div>`;
+    document.getElementById('modal').classList.remove('hidden');
+}
+function openRow(row,headers,index){
+    document.getElementById('modal-content').innerHTML=`<h2>Dataset Row ${index}</h2><div class="detail-grid">${headers.map((h,i)=>`<div><b>${esc(h)}</b><span>${esc(row[i])}</span></div>`).join('')}</div>`;
+    document.getElementById('modal').classList.remove('hidden');
+}
+function openInfo(type){
+    let html='';
+    if(type==='dataset') html='<h2>Dataset</h2><p class="muted">The active CSV used by the training pipeline.</p><div class="detail-grid"><div><b>File</b><span>data/loan_data.csv</span></div><div><b>Preview</b><span>First 10 rows</span></div></div>';
+    if(type==='target') html='<h2>Target</h2><p class="muted">loan_status is the classification target.</p><div class="detail-grid"><div><b>0</b><span>Rejected</span></div><div><b>1</b><span>Approved</span></div></div>';
+    if(type==='features') html='<h2>Model Features</h2><div class="detail-grid">'+MODEL_SCHEMA.map(x=>`<div><b>Feature</b><span>${esc(x)}</span></div>`).join('')+'</div>';
+    document.getElementById('modal-content').innerHTML=html;document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal(e){if(!e||e.target.id==='modal'||!e.target.closest('.modal-box'))document.getElementById('modal').classList.add('hidden');}
+
+function openUpload(){document.getElementById('upload-modal').classList.remove('hidden');}
+function closeUpload(e){if(!e||e.target.id==='upload-modal'||!e.target.closest('.modal-box'))document.getElementById('upload-modal').classList.add('hidden');}
+function toggleMapping(){document.getElementById('mapping-area').classList.toggle('hidden',document.querySelector('input[name=mapping]:checked').value!=='custom');renderMapping();}
+
+function inspectFile(){
+    const file=document.getElementById('csv-file').files[0]; if(!file)return;
+    document.getElementById('file-info').textContent=`${file.name} · ${(file.size/1024).toFixed(1)} KB`;
+    const reader=new FileReader();
+    reader.onload=e=>{
+        const first=e.target.result.split(/\r?\n/,1)[0]||'';
+        detectedHeaders=first.split(',').map(x=>x.trim().replace(/^"|"$/g,'')).filter(Boolean);
+        renderMapping();
+    };
+    reader.readAsText(file.slice(0,10000));
+}
+function renderMapping(){
+    if(document.querySelector('input[name=mapping]:checked').value!=='custom')return;
+    document.getElementById('mapping-list').innerHTML=MODEL_SCHEMA.concat(['loan_status']).map(field=>{
+        const match=detectedHeaders.find(h=>h.toLowerCase()===field.toLowerCase())||'';
+        return `<div class="mapping-row tip" data-tip="Map the required model field ${esc(field)} to the matching uploaded CSV column."><label>${esc(field)}</label><select data-feature="${esc(field)}"><option value="">-- Select CSV column --</option>${detectedHeaders.map(h=>`<option value="${esc(h)}" ${h===match?'selected':''}>${esc(h)}</option>`).join('')}</select></div>`;
+    }).join('');
+}
+
+function setProgress(title,percent,detail){
+    document.getElementById('progress').classList.remove('hidden');
+    document.getElementById('progress-title').textContent=title;
+    document.getElementById('progress-percent').textContent=percent+'%';
+    document.getElementById('progress-bar').style.width=percent+'%';
+    document.getElementById('progress-detail').textContent=detail;
+}
+function finishProgress(){
+    setProgress('Completed',100,'Training completed and the new PKL is ready.');
+    setTimeout(()=>document.getElementById('progress').classList.add('hidden'),1200);
+}
+function setBusy(b){
+    document.getElementById('clear-btn').disabled=b;document.getElementById('upload-btn').disabled=b;document.getElementById('upload-submit').disabled=b;
+}
+
+async function clearAndRetrain(){
+    if(!confirm('Clear the existing PKL and retrain using the current CSV?'))return;
+    setBusy(true);setProgress('Retraining model',15,'Clearing the existing PKL and running the training pipeline...');
+    try{
+        const fd=new FormData();fd.append('clear_pkl','true');
+        setProgress('Retraining model',40,'Training SVC pipeline...');
+        const res=await fetch('/retrain',{method:'POST',body:fd});const d=await res.json();
+        if(!res.ok||d.status!=='success')throw new Error(d.message||'Retraining failed');
+        setProgress('Retraining model',90,'Evaluating model and writing PKL...');
+        await new Promise(r=>setTimeout(r,150));finishProgress();await loadData();
+        alert(d.message);
+    }catch(e){setProgress('Retraining failed',100,e.message);alert(e.message);}
+    finally{setBusy(false);}
+}
+
+async function uploadAndRetrain(){
+    const file=document.getElementById('csv-file').files[0];if(!file){alert('Please select a CSV file.');return;}
+    const mappingType=document.querySelector('input[name=mapping]:checked').value;
+    const mappings={};
+    if(mappingType==='custom')document.querySelectorAll('#mapping-list select').forEach(s=>{if(s.value)mappings[s.dataset.feature]=s.value;});
+    closeUpload();setBusy(true);setProgress('Uploading dataset',10,'Uploading and validating the CSV...');
+    try{
+        const fd=new FormData();fd.append('file',file);fd.append('replace_dataset','true');fd.append('mapping_type',mappingType);fd.append('custom_mappings',JSON.stringify(mappings));
+        setProgress('Validating dataset',35,'Checking required columns and target classes...');
+        const res=await fetch('/retrain',{method:'POST',body:fd});const d=await res.json();
+        if(!res.ok||d.status!=='success')throw new Error(d.message||'Upload failed');
+        setProgress('Retraining model',85,'Training the new SVC and generating the PKL...');
+        await new Promise(r=>setTimeout(r,150));finishProgress();await loadData();
+        alert(d.message);
+    }catch(e){setProgress('Upload/retraining failed',100,e.message);alert(e.message);}
+    finally{setBusy(false);}
+}
+document.addEventListener('DOMContentLoaded',()=>{loadFeatures();loadData();});
+</script>
+{% endblock %}
