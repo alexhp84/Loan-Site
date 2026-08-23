@@ -56,8 +56,7 @@ Split between numerical and text (Categorical) features.
 NUMERIC_FEATURES = [
     "person_income",
     "loan_amnt",
-    "loan_int_rate",
-    "loan_percent_income",
+    "cb_person_cred_hist_length",
     "credit_score",
 ]
 
@@ -165,9 +164,9 @@ def build_pipeline() -> Pipeline:
     #Initializes an Support Vector Classifier model using an RBF kernel
     logger.info("Base SVC Estimator set")
     base_svc = SVC(
-        C=1.0,
+        C=100,
         kernel="rbf",
-        class_weight=None,
+        class_weight="balanced",
         random_state=42,
     )
     #CalibratedClassifierCV provides predict_proba without SVC probability=True warnings
@@ -232,6 +231,23 @@ def evaluate(pipeline: Pipeline, X_test: pd.DataFrame, y_test: pd.Series) -> Non
     base_svc = calibrated.calibrated_classifiers_[0].estimator
     sv_count = int(np.sum(base_svc.n_support_)) if hasattr(base_svc, 'n_support_') else 0
 
+    #Calculate the SVC margin distribution for dashboard/API metrics
+    X_transformed_test = pipeline.named_steps["preprocessor"].transform(X_test)
+    margins = base_svc.decision_function(X_transformed_test)
+
+    counts, edges = np.histogram(margins, bins=7)
+
+    margin_bins = []
+    for i in range(len(edges) - 1):
+        margin_bins.append(
+            f"{edges[i]:.2f} to {edges[i + 1]:.2f}"
+        )
+
+    margin_distribution = {
+        "bins": margin_bins,
+        "counts": counts.astype(int).tolist(),
+    }
+
     #Package model payload with metrics for app.py and APIs
     logger.info("Generating payload")
     payload = {
@@ -243,10 +259,9 @@ def evaluate(pipeline: Pipeline, X_test: pd.DataFrame, y_test: pd.Series) -> Non
             "f1_score": float(f1),
             "support_vectors": sv_count,
             "confusion_matrix": cm.tolist(),
-            "margin_distribution": {"bins": ["-3", "-2", "-1", "0", "1", "2", "3"],
-                                    "counts": [15, 82, 340, 510, 312, 110, 24]}
+            "margin_distribution": margin_distribution,
         },
-        "pca_3d": pca_3d
+        "pca_3d": pca_3d,
     }
 
     logger.info("Exporting the model")

@@ -1,59 +1,127 @@
-{% extends "base.html" %}
-{% block title %}API Status{% endblock %}
-{% block content %}
-<div class="container">
-    <div class="page-header">
-        <div>
-            <div class="eyebrow">API STATUS</div>
-            <h1>API Status</h1>
-            <p>Available API endpoints and their current status.</p>
-        </div>
-    </div>
-    <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-            <h1 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-3" title="A live registry of the REST endpoints exposed by this application.">API Endpoints Registry</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API Status</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .tip{position:relative;cursor:help}
+        .tip[data-tip]::after{
+            content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);
+            transform:translateX(-50%) translateY(4px);width:max-content;max-width:320px;
+            padding:8px 10px;background:#0b1220;color:#e5e7eb;border:1px solid #475569;
+            border-radius:7px;font-size:12px;line-height:1.35;font-weight:500;
+            white-space:normal;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.35);
+            opacity:0;visibility:hidden;pointer-events:none;transition:.15s;z-index:1000
+        }
+        .tip[data-tip]:hover::after{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+    </style>
+
+</head>
+
+<body class="bg-gray-900 text-gray-100 min-h-screen p-8">
+    <div class="max-w-5xl mx-auto">
+
+        <nav class="flex justify-between items-center mb-6 bg-gray-800 p-4 rounded-lg border border-gray-700 shadow">
+            <div class="flex space-x-4">
+                <a href="/" class="text-gray-300 hover:text-white transition tip" data-tip="Return to the loan application form.">Home</a>
+                <a href="/dashboard" class="text-gray-300 hover:text-white transition tip" data-tip="View model metrics, classification analysis and visualisations.">Model Dashboard</a>
+                <a href="/model" class="text-gray-300 hover:text-white transition tip" data-tip="View model details, data preview and retraining controls.">Model Details</a>
+                <a href="/api" class="text-blue-400 font-semibold tip" data-tip="View all available REST APIs and their status.">API Status</a>
+                <a href="/logs" class="text-gray-300 hover:text-white transition tip" data-tip="View application, model, HTTP and error logs.">Application Logs</a>
+            </div>
+
+            <a href="/apidocs" target="_blank"
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded shadow transition tip" data-tip="Open Swagger documentation for every implemented API, including parameters and responses.">
+                Swagger Documentation
+            </a>
+        </nav>
+
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+                <div>
+                    <h1 class="text-2xl font-bold">API Status</h1>
+                    <p class="text-sm text-gray-400 mt-1">
+                        Available REST endpoints for the loan application. Swagger documents each endpoint, request parameter and response.
+                    </p>
+                </div>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-gray-700 text-gray-300 uppercase text-xs tracking-wider">
-                            <th class="p-3" title="HTTP method used by the endpoint.">Method</th>
-                            <th class="p-3" title="URL path used to access the endpoint.">Endpoint</th>
-                            <th class="p-3" title="What the endpoint does.">Description</th>
-                            <th class="p-3" title="Whether the endpoint is currently available.">Status</th>
+                        <tr class="bg-gray-700 text-gray-200 uppercase text-xs tracking-wider">
+                            <th class="p-3 border-b border-gray-600">Method</th>
+                            <th class="p-3 border-b border-gray-600">Endpoint</th>
+                            <th class="p-3 border-b border-gray-600">Description</th>
+                            <th class="p-3 border-b border-gray-600">Status</th>
                         </tr>
                     </thead>
-                    <tbody id="endpoints-table" class="divide-y divide-gray-700 text-sm"></tbody>
+                    <tbody id="endpoints-table" class="divide-y divide-gray-700 text-sm">
+                        <tr>
+                            <td colspan="4" class="p-4 text-gray-400">Loading API endpoints...</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
-</div>
-<script>
-fetch('/api-status')
-    .then(res => res.json())
-    .then(data => {
-        const tbody = document.getElementById('endpoints-table');
-        tbody.innerHTML = '';
-        data.sort((a,b) => {
-            const order = {POST: 0, GET: 1};
-            return (order[a.method] ?? 9) - (order[b.method] ?? 9);
-        });
-        data.forEach(ep => {
-            const methodColor = ep.method === 'POST'
-                ? 'background:#14532d;color:#86efac;'
-                : 'background:#1e3a8a;color:#93c5fd;';
-            const statusColor = ep.status === 'Online' ? '#4ade80' : '#fbbf24';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="p-3"><span style="display:inline-block;padding:.25rem .5rem;border-radius:.25rem;font-size:.75rem;font-weight:700;${methodColor}">${ep.method}</span></td>
-                <td class="p-3 font-mono" style="color:#60a5fa">${ep.endpoint}</td>
-                <td class="p-3" style="color:#d1d5db">${ep.description || ''}</td>
-                <td class="p-3 font-semibold" style="color:${statusColor}">${ep.status}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    })
-    .catch(err => {
-        const tbody = document.getElementById('endpoints-table');
-        tbody.innerHTML = `<tr><td colspan="4" style="padding:1rem;color:#f87171">Unable to load API status: ${err.message}</td></tr>`;
-    });
-</script>
-{% endblock %}
+    </div>
+
+    <script>
+        fetch('/api-status')
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('endpoints-table');
+
+                const ordered = [
+                    ...data.filter(ep => ep.method === 'POST'),
+                    ...data.filter(ep => ep.method === 'GET')
+                ];
+
+                tbody.innerHTML = '';
+
+                ordered.forEach(ep => {
+                    const methodColor =
+                        ep.method === 'POST'
+                            ? 'bg-green-900 text-green-300'
+                            : 'bg-blue-900 text-blue-300';
+
+                    const statusColor =
+                        ep.status === 'Online'
+                            ? 'text-green-400'
+                            : 'text-yellow-400';
+
+                    const tr = document.createElement('tr');
+
+                    tr.innerHTML = `
+                        <td class="p-3">
+                            <span class="inline-block px-2 py-1 rounded text-xs font-bold ${methodColor}">
+                                ${ep.method}
+                            </span>
+                        </td>
+                        <td class="p-3 font-mono text-blue-400 whitespace-nowrap">
+                            ${ep.endpoint}
+                        </td>
+                        <td class="p-3 text-gray-300">
+                            ${ep.description}
+                        </td>
+                        <td class="p-3 font-semibold ${statusColor}">
+                            ${ep.status}
+                        </td>
+                    `;
+
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(() => {
+                document.getElementById('endpoints-table').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-4 text-red-400 font-semibold">
+                            Unable to load API status.
+                        </td>
+                    </tr>
+                `;
+            });
+    </script>
+</body>
+</html>

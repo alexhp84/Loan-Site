@@ -66,15 +66,8 @@ add_log_handler("error.log", "ERROR")
 app.logger.setLevel(logging.INFO)
 
 
-def log_app_event(message):
-    app.logger.info(message, extra={"log_type": "INFO"})
-
-
 def log_model_event(message):
     app.logger.info(message, extra={"log_type": "MODEL"})
-
-
-log_app_event("Loan application server initialized.")
 
 
 @app.before_request
@@ -130,11 +123,35 @@ def logs_page():
 
 @app.route("/data-preview")
 def data_preview():
-    """Return the first ten rows of the active CSV.
+    """Return the first ten rows of the active CSV dataset.
 
     ---
     tags:
       - Data
+    responses:
+      200:
+        description: Dataset preview
+        schema:
+          type: object
+          properties:
+            headers:
+              type: array
+              items:
+                type: string
+              description: Column names in the active dataset
+            rows:
+              type: array
+              items:
+                type: array
+              description: First ten dataset rows
+            row_count:
+              type: integer
+              description: Total number of rows in the active dataset
+            column_count:
+              type: integer
+              description: Total number of columns in the active dataset
+      500:
+        description: Dataset could not be read
     """
     if not os.path.exists(DATA_PATH):
         return jsonify({"headers": [], "rows": []})
@@ -146,6 +163,7 @@ def data_preview():
                 "headers": list(df.columns),
                 "rows": df.head(10).fillna("").values.tolist(),
                 "row_count": int(len(df)),
+                "column_count": int(len(df.columns)),
             }
         )
     except Exception as e:
@@ -158,11 +176,21 @@ def data_preview():
 
 @app.route("/download-model")
 def download_model():
-    """Download the active PKL model artifact.
+    """Download the active trained PKL model.
 
     ---
     tags:
       - Model
+    produces:
+      - application/octet-stream
+    responses:
+      200:
+        description: Active loan SVC model file
+        schema:
+          type: string
+          format: binary
+      404:
+        description: Model PKL does not exist
     """
     if not os.path.exists(MODEL_PATH):
         return jsonify({"status": "error", "message": "Model PKL does not exist."}), 404
@@ -242,14 +270,67 @@ def run_training_job(job_id):
 
 @app.route("/retrain", methods=["POST"])
 def retrain_model_endpoint():
-    """Clear/retrain the model or replace the CSV and retrain.
+    """Clear/retrain the model or upload a replacement CSV dataset and retrain.
+
+    For a clear-and-retrain operation, submit ``clear_pkl=true``.
+    For a dataset replacement, submit ``replace_dataset=true`` and attach a CSV file.
 
     ---
     tags:
       - Training
+    consumes:
+      - multipart/form-data
+    parameters:
+      - in: formData
+        name: clear_pkl
+        type: boolean
+        required: false
+        default: false
+        description: Clear the active PKL and retrain using the existing dataset.
+      - in: formData
+        name: replace_dataset
+        type: boolean
+        required: false
+        default: false
+        description: Replace the active CSV dataset and retrain.
+      - in: formData
+        name: file
+        type: file
+        required: false
+        description: Replacement CSV file. Required when replace_dataset=true.
+      - in: formData
+        name: mapping_type
+        type: string
+        required: false
+        default: default
+        enum:
+          - default
+          - custom
+        description: Dataset column mapping mode.
+      - in: formData
+        name: custom_mappings
+        type: string
+        required: false
+        default: "{}"
+        description: JSON object defining custom source-to-target column mappings when mapping_type=custom.
     responses:
       200:
         description: Training job started
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: started
+            job_id:
+              type: string
+              description: Identifier used to query retraining progress
+            message:
+              type: string
+      400:
+        description: Invalid request, missing CSV, invalid mapping, or missing required dataset columns
+      500:
+        description: Failed to start retraining
     """
     try:
         replace_dataset = request.form.get("replace_dataset") == "true"
@@ -287,9 +368,9 @@ def retrain_model_endpoint():
                     log_model_event(f"Applied custom header mappings: {rename_map}")
 
                 required = (
-                    train_model.NUMERIC_FEATURES
-                    + train_model.CATEGORICAL_FEATURES
-                    + [train_model.TARGET_COLUMN]
+                        train_model.NUMERIC_FEATURES
+                        + train_model.CATEGORICAL_FEATURES
+                        + [train_model.TARGET_COLUMN]
                 )
                 missing = [column for column in required if column not in df.columns]
 
@@ -371,6 +452,33 @@ def retrain_status(job_id):
     ---
     tags:
       - Training
+    parameters:
+      - in: path
+        name: job_id
+        type: string
+        required: true
+        description: Job identifier returned by POST /retrain.
+    responses:
+      200:
+        description: Current retraining status
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            progress:
+              type: integer
+              description: Training progress percentage
+            stage:
+              type: string
+              description: Current training stage
+            message:
+              type: string
+            accuracy:
+              type: string
+              description: Final accuracy when training succeeds
+      404:
+        description: Training job not found
     """
     job = get_job(job_id)
     if not job:
@@ -380,7 +488,7 @@ def retrain_status(job_id):
 
 @app.route("/model-info")
 def model_info():
-    """Return the active model metadata, metrics, PCA projection and dataset information.
+    """Return active model metadata, metrics, PCA projection and dataset information.
 
     ---
     tags:
@@ -388,6 +496,60 @@ def model_info():
     responses:
       200:
         description: Active model information
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            metrics:
+              type: object
+              properties:
+                accuracy:
+                  type: number
+                precision:
+                  type: number
+                recall:
+                  type: number
+                f1_score:
+                  type: number
+                support_vectors:
+                  type: integer
+                confusion_matrix:
+                  type: array
+                  items:
+                    type: array
+                    items:
+                      type: integer
+                margin_distribution:
+                  type: object
+                  properties:
+                    bins:
+                      type: array
+                      items:
+                        type: string
+                    counts:
+                      type: array
+                      items:
+                        type: integer
+            pca_3d:
+              type: object
+              description: PCA coordinates grouped by class.
+            model:
+              type: object
+              description: Model configuration and metadata.
+            dataset:
+              type: object
+              properties:
+                filename:
+                  type: string
+                rows:
+                  type: integer
+                columns:
+                  type: integer
+      404:
+        description: Model has not been trained
+      500:
+        description: Failed to read model information
     """
     if not os.path.exists(MODEL_PATH):
         return jsonify({"status": "error", "message": "Model not trained yet."}), 404
@@ -477,32 +639,101 @@ def model_info():
 
 def build_input_data(req_data):
     feature_columns = train_model.NUMERIC_FEATURES + train_model.CATEGORICAL_FEATURES
-    filtered_data = {}
 
+    missing = [
+        key for key in feature_columns
+        if key not in req_data or str(req_data[key]).strip() == ""
+    ]
+    if missing:
+        raise ValueError(f"Missing required model features: {missing}")
+
+    filtered_data = {}
     for key in feature_columns:
-        if key in req_data and req_data[key] != "":
-            if key in train_model.NUMERIC_FEATURES:
-                filtered_data[key] = float(req_data[key])
-            else:
-                filtered_data[key] = str(req_data[key]).strip()
+        value = req_data[key]
+
+        if key in train_model.NUMERIC_FEATURES:
+            try:
+                filtered_data[key] = float(value)
+            except (TypeError, ValueError):
+                raise ValueError(f"Invalid numeric value for {key}.")
         else:
-            filtered_data[key] = (
-                0.0 if key in train_model.NUMERIC_FEATURES else "unknown"
-            )
+            filtered_data[key] = str(value).strip()
 
     return pd.DataFrame([filtered_data], columns=feature_columns), filtered_data
 
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    """Run loan approval prediction.
+    """Run loan approval prediction for applicant data.
 
     ---
     tags:
       - Prediction
+    consumes:
+      - application/json
+      - application/x-www-form-urlencoded
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - person_income
+            - loan_amnt
+            - cb_person_cred_hist_length
+            - credit_score
+            - person_home_ownership
+            - previous_loan_defaults_on_file
+          properties:
+            person_income:
+              type: number
+              description: Applicant's annual income
+              example: 50000
+            loan_amnt:
+              type: number
+              description: Requested loan amount
+              example: 10000
+            cb_person_cred_hist_length:
+              type: number
+              description: Length of credit history in years
+              example: 5
+            credit_score:
+              type: number
+              description: Applicant's credit score
+              example: 700
+            person_home_ownership:
+              type: string
+              enum: [RENT, MORTGAGE, OWN, OTHER]
+              description: Applicant home ownership status
+              example: RENT
+            previous_loan_defaults_on_file:
+              type: string
+              enum: [Yes, No]
+              description: Whether previous loan defaults are recorded
+              example: No
     responses:
       200:
         description: Prediction result
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            prediction_code:
+              type: integer
+              description: "0 = Denied, 1 = Approved"
+            prediction:
+              type: string
+              description: "Denied or Approved"
+            probabilities:
+              type: array
+              items:
+                type: number
+      400:
+        description: Model unavailable or invalid request
+      500:
+        description: Prediction failed
     """
     if not os.path.exists(MODEL_PATH):
         return jsonify({"status": "error", "message": "Model not available for predictions."}), 400
@@ -515,6 +746,10 @@ def predict():
             payload = pickle.load(f)
 
         pipeline = payload["pipeline"]
+        classes = list(getattr(pipeline, "classes_", []))
+        if classes and set(classes) != {0, 1}:
+            raise ValueError(f"Model classes are {classes}; expected [0, 1].")
+
         prediction = int(pipeline.predict(input_df)[0])
         probabilities = (
             pipeline.predict_proba(input_df)[0].tolist()
@@ -546,14 +781,79 @@ def predict():
 
 @app.route("/margin", methods=["POST"])
 def calculate_margin():
-    """Calculate the SVC decision margin and prediction.
+    """Calculate the SVC decision margin and loan classification.
 
     ---
     tags:
       - Prediction
+    consumes:
+      - application/json
+      - application/x-www-form-urlencoded
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - person_income
+            - loan_amnt
+            - cb_person_cred_hist_length
+            - credit_score
+            - person_home_ownership
+            - previous_loan_defaults_on_file
+          properties:
+            person_income:
+              type: number
+              description: Applicant's annual income
+              example: 50000
+            loan_amnt:
+              type: number
+              description: Requested loan amount
+              example: 10000
+            cb_person_cred_hist_length:
+              type: number
+              description: Length of credit history in years
+              example: 5
+            credit_score:
+              type: number
+              description: Applicant's credit score
+              example: 700
+            person_home_ownership:
+              type: string
+              enum: [RENT, MORTGAGE, OWN, OTHER]
+              description: Applicant home ownership status
+              example: RENT
+            previous_loan_defaults_on_file:
+              type: string
+              enum: [Yes, No]
+              description: Whether previous loan defaults are recorded
+              example: No
     responses:
       200:
-        description: Margin and prediction result
+        description: Decision margin and classification result
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            prediction_code:
+              type: integer
+              description: "0 = Denied, 1 = Approved"
+            prediction:
+              type: string
+              description: "Denied or Approved"
+            margin:
+              type: number
+              description: Underlying SVC decision-function score
+            probabilities:
+              type: array
+              items:
+                type: number
+      400:
+        description: Model unavailable or invalid request
+      500:
+        description: Margin calculation failed
     """
     if not os.path.exists(MODEL_PATH):
         return jsonify({"status": "error", "message": "Model not available."}), 400
@@ -566,26 +866,39 @@ def calculate_margin():
             payload = pickle.load(f)
 
         pipeline = payload["pipeline"]
-        preprocessor = pipeline.named_steps["preprocessor"]
-        classifier = pipeline.named_steps["svc"]
-
-        X_transformed = preprocessor.transform(input_df)
-
-        if hasattr(classifier, "decision_function"):
-            margin_score = float(classifier.decision_function(X_transformed)[0])
-        elif (
-            hasattr(classifier, "calibrated_classifiers_")
-            and classifier.calibrated_classifiers_
-        ):
-            base_estimator = classifier.calibrated_classifiers_[0].estimator
-            margin_score = float(base_estimator.decision_function(X_transformed)[0])
-        else:
-            margin_score = 0.0
 
         prediction = int(pipeline.predict(input_df)[0])
 
+        # The trained pipeline uses CalibratedClassifierCV around SVC.
+        # The underlying fitted SVC provides the SVC decision margin.
+        preprocessor = pipeline.named_steps["preprocessor"]
+        classifier = pipeline.named_steps["svc"]
+        X_transformed = preprocessor.transform(input_df)
+
+        margin_score = None
+
+        if hasattr(classifier, "decision_function"):
+            margin_score = float(classifier.decision_function(X_transformed)[0])
+        elif getattr(classifier, "calibrated_classifiers_", None):
+            base_estimator = classifier.calibrated_classifiers_[0].estimator
+            if hasattr(base_estimator, "decision_function"):
+                margin_score = float(base_estimator.decision_function(X_transformed)[0])
+
+        if margin_score is None:
+            raise ValueError("Unable to calculate the SVC decision margin from the active model.")
+
+        classes = list(getattr(pipeline, "classes_", []))
+        if classes and set(classes) != {0, 1}:
+            raise ValueError(f"Model classes are {classes}; expected [0, 1].")
+
         log_model_event(
             f"Margin evaluated: Input={filtered_data} Code={prediction} Margin={margin_score:.4f}"
+        )
+
+        probabilities = (
+            pipeline.predict_proba(input_df)[0].tolist()
+            if hasattr(pipeline, "predict_proba")
+            else []
         )
 
         return jsonify(
@@ -594,6 +907,7 @@ def calculate_margin():
                 "prediction_code": prediction,
                 "prediction": "Approved" if prediction == 1 else "Denied",
                 "margin": margin_score,
+                "probabilities": probabilities,
             }
         )
 
@@ -613,6 +927,24 @@ def api_status():
     ---
     tags:
       - API
+    responses:
+      200:
+        description: Available REST endpoints, ordered POST before GET.
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              endpoint:
+                type: string
+              method:
+                type: string
+                enum: [POST, GET]
+              description:
+                type: string
+              status:
+                type: string
+                enum: [Online, Disabled]
     """
     model_loaded = os.path.exists(MODEL_PATH)
 
@@ -632,7 +964,7 @@ def api_status():
         {
             "endpoint": "/retrain",
             "method": "POST",
-            "description": "Clear/retrain or replace dataset and retrain",
+            "description": "Clear/retrain the model or upload a replacement CSV and retrain",
             "status": "Online",
         },
         {
@@ -679,6 +1011,8 @@ def api_status():
         },
     ]
 
+    method_order = {"POST": 0, "GET": 1}
+    endpoints.sort(key=lambda ep: (method_order.get(ep["method"], 99), ep["endpoint"]))
     return jsonify(endpoints)
 
 
@@ -689,6 +1023,30 @@ def get_log():
     ---
     tags:
       - Logs
+    parameters:
+      - in: query
+        name: type
+        type: string
+        required: false
+        default: app
+        enum:
+          - app
+          - model
+          - http
+          - error
+        description: Log source to retrieve.
+    responses:
+      200:
+        description: Log records
+        schema:
+          type: object
+          properties:
+            logs:
+              type: array
+              items:
+                type: string
+      500:
+        description: Unable to read the requested log
     """
     log_type = request.args.get("type", "app")
     file_map = {
@@ -711,11 +1069,31 @@ def get_log():
 
 @app.route("/download-log/<path:log_name>")
 def download_log(log_name):
-    """Download one log file or all logs as a ZIP.
+    """Download one log file or all logs as a ZIP archive.
 
     ---
     tags:
       - Logs
+    parameters:
+      - in: path
+        name: log_name
+        type: string
+        required: true
+        description: Log identifier. Use app, model, http, error, or all.
+        enum:
+          - app
+          - model
+          - http
+          - error
+          - all
+    produces:
+      - application/octet-stream
+      - application/zip
+    responses:
+      200:
+        description: Requested log file or ZIP archive
+      404:
+        description: Log file not found
     """
     file_map = {
         "app": "app.log",

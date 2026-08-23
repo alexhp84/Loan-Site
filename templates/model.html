@@ -22,7 +22,7 @@
 
     <div class="summary-grid">
         <button class="summary-card tip" data-tip="Shows information about the active CSV dataset, including its location and preview." onclick="openInfo('dataset')"><span>Dataset</span><strong id="dataset-name">loan_data.csv</strong><small id="dataset-size">Loading...</small></button>
-        <button class="summary-card tip" data-tip="Shows the seven fields currently expected by the trained model." onclick="openInfo('features')"><span>Model Features</span><strong>7</strong><small>Click for schema</small></button>
+        <button class="summary-card tip" data-tip="Shows the six fields currently expected by the trained model." onclick="openInfo('features')"><span>Model Features</span><strong>6</strong><small>Click for schema</small></button>
         <button class="summary-card tip" data-tip="Shows the target field and the meaning of its class values: 0 = Rejected and 1 = Approved." onclick="openInfo('target')"><span>Target</span><strong>loan_status</strong><small>0 = Rejected · 1 = Approved</small></button>
     </div>
 
@@ -49,8 +49,8 @@
         <button class="modal-close tip" data-tip="Close the upload window without changing the dataset or model." onclick="closeUpload()">×</button>
         <h2>Upload New Dataset</h2>
         <p class="muted">The existing CSV and PKL are replaced only after the uploaded dataset passes validation.</p>
-        <label class="field-label tip" data-tip="Select the replacement CSV dataset. It must contain the model features and loan_status target.">CSV file</label>
-        <input id="csv-file" class="tip" data-tip="Select a CSV file containing the model features and loan_status target column." type="file" accept=".csv" onchange="inspectFile()">
+        <label class="field-label tip" data-tip="Select the replacement CSV dataset. It must contain the six model features and loan_status target.">CSV file</label>
+        <input id="csv-file" class="tip" data-tip="Select a CSV file containing the six model features and loan_status target column." type="file" accept=".csv" onchange="inspectFile()">
         <div id="file-info" class="file-info">Select a CSV file to begin.</div>
 
         <div class="mapping-options">
@@ -85,24 +85,23 @@
 
 <script>
 const MODEL_SCHEMA=[
-"person_income","loan_amnt","loan_int_rate","loan_percent_income","credit_score",
-"person_home_ownership","previous_loan_defaults_on_file"
+"previous_loan_defaults_on_file","credit_score","cb_person_cred_hist_length",
+"person_home_ownership","person_income","loan_amnt"
 ];
 const FEATURE_INFO={
-person_income:["Person Income","Applicant income used as a numeric model feature."],
-loan_amnt:["Loan Amount","Requested loan amount."],
-loan_int_rate:["Loan Interest Rate","Interest rate associated with the loan."],
-loan_percent_income:["Loan Percent Income","Loan amount expressed as a proportion of income."],
-credit_score:["Credit Score","Applicant credit score."],
-person_home_ownership:["Home Ownership","Applicant home ownership category."],
-previous_loan_defaults_on_file:["Previous Loan Defaults","Whether previous loan defaults are recorded."]
+previous_loan_defaults_on_file:["Previous Loan","Whether previous loan defaults are on file (Yes/No)."],
+credit_score:["Credit Score","Applicant's credit score."],
+cb_person_cred_hist_length:["Credit History","Length of the applicant's credit history, in years."],
+person_home_ownership:["Home Ownership","Applicant's home ownership status (RENT, OWN, MORTGAGE, OTHER)."],
+person_income:["Person Income","Applicant's annual income."],
+loan_amnt:["Loan Amount","Requested loan amount."]
 };
 let detectedHeaders=[];
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 function loadFeatures(){
-    document.getElementById('feature-list').innerHTML=MODEL_SCHEMA.map(f=>`<button class="feature tip" data-tip="Inspect what the ${esc(f)} field means and how it is used by the model." onclick="openFeature('${f}')">${esc(f)}</button>`).join('');
+    document.getElementById('feature-list').innerHTML=MODEL_SCHEMA.map(f=>{const info=FEATURE_INFO[f]||[f,'Model feature.'];return `<button class="feature tip" data-tip="${esc(info[1])}" onclick="openFeature('${f}')">${esc(info[0])}</button>`;}).join('');
 }
 
 async function loadData(){
@@ -117,7 +116,7 @@ async function loadData(){
 
 function openFeature(name){
     const [title,desc]=FEATURE_INFO[name]||[name,'Model feature.'];
-    document.getElementById('modal-content').innerHTML=`<h2>${esc(title)}</h2><p class="muted">${esc(desc)}</p><div class="detail-grid"><div><b>Field</b><span>${esc(name)}</span></div><div><b>Type</b><span>${MODEL_SCHEMA.includes(name)&&['person_income','loan_amnt','loan_int_rate','loan_percent_income','credit_score'].includes(name)?'Numeric':'Categorical'}</span></div></div>`;
+    document.getElementById('modal-content').innerHTML=`<h2>${esc(title)}</h2><p class="muted">${esc(desc)}</p><div class="detail-grid"><div><b>Field</b><span>${esc(name)}</span></div><div><b>Type</b><span>${MODEL_SCHEMA.includes(name)&&['person_income','loan_amnt','cb_person_cred_hist_length','credit_score'].includes(name)?'Numeric':'Categorical'}</span></div></div>`;
     document.getElementById('modal').classList.remove('hidden');
 }
 function openRow(row,headers,index){
@@ -128,7 +127,7 @@ function openInfo(type){
     let html='';
     if(type==='dataset') html='<h2>Dataset</h2><p class="muted">The active CSV used by the training pipeline.</p><div class="detail-grid"><div><b>File</b><span>data/loan_data.csv</span></div><div><b>Preview</b><span>First 10 rows</span></div></div>';
     if(type==='target') html='<h2>Target</h2><p class="muted">loan_status is the classification target.</p><div class="detail-grid"><div><b>0</b><span>Rejected</span></div><div><b>1</b><span>Approved</span></div></div>';
-    if(type==='features') html='<h2>Model Features</h2><div class="detail-grid">'+MODEL_SCHEMA.map(x=>`<div><b>Feature</b><span>${esc(x)}</span></div>`).join('')+'</div>';
+    if(type==='features') html='<h2>Model Features</h2><div class="detail-grid">'+MODEL_SCHEMA.map(x=>{const info=FEATURE_INFO[x]||[x,'Model feature.'];return `<div><b>${esc(info[0])}</b><span>${esc(info[1])}</span></div>`;}).join('')+'</div>';
     document.getElementById('modal-content').innerHTML=html;document.getElementById('modal').classList.remove('hidden');
 }
 function closeModal(e){if(!e||e.target.id==='modal'||!e.target.closest('.modal-box'))document.getElementById('modal').classList.add('hidden');}
@@ -152,7 +151,7 @@ function renderMapping(){
     if(document.querySelector('input[name=mapping]:checked').value!=='custom')return;
     document.getElementById('mapping-list').innerHTML=MODEL_SCHEMA.concat(['loan_status']).map(field=>{
         const match=detectedHeaders.find(h=>h.toLowerCase()===field.toLowerCase())||'';
-        return `<div class="mapping-row tip" data-tip="Map the required model field ${esc(field)} to the matching uploaded CSV column."><label>${esc(field)}</label><select data-feature="${esc(field)}"><option value="">-- Select CSV column --</option>${detectedHeaders.map(h=>`<option value="${esc(h)}" ${h===match?'selected':''}>${esc(h)}</option>`).join('')}</select></div>`;
+        return `<div class="mapping-row tip" data-tip="Map the required model field ${esc(field)} to the matching uploaded CSV column."><label>${esc((FEATURE_INFO[field]||[field])[0])}</label><select data-feature="${esc(field)}"><option value="">-- Select CSV column --</option>${detectedHeaders.map(h=>`<option value="${esc(h)}" ${h===match?'selected':''}>${esc(h)}</option>`).join('')}</select></div>`;
     }).join('');
 }
 

@@ -2,211 +2,197 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loan Application Assessment</title>
-    <style>
-        .tip{position:relative;cursor:help}
-        .tip[data-tip]::after{
-            content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);
-            transform:translateX(-50%) translateY(4px);width:max-content;max-width:300px;
-            padding:8px 10px;background:#0b1220;color:#e5e7eb;border:1px solid #475569;
-            border-radius:7px;font-size:12px;line-height:1.35;font-weight:500;
-            white-space:normal;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.35);
-            opacity:0;visibility:hidden;pointer-events:none;transition:.15s;z-index:1000
-        }
-        .tip[data-tip]:hover::after{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
-        .field-box{position:relative}
-        .result-modal{
-            position:fixed;inset:0;background:rgba(2,6,23,.78);display:flex;
-            align-items:center;justify-content:center;padding:1.5rem;z-index:2000
-        }
-        .result-modal.hidden{display:none}
-        .result-box{
-            width:min(440px,100%);background:#1f2937;border:1px solid #475569;
-            border-radius:14px;padding:2rem;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)
-        }
-        .result-icon{
-            width:76px;height:76px;border-radius:50%;display:flex;align-items:center;
-            justify-content:center;margin:0 auto 1rem;font-size:42px;font-weight:800
-        }
-        .result-icon.approved{background:#064e3b;color:#4ade80;border:2px solid #22c55e}
-        .result-icon.denied{background:#450a0a;color:#f87171;border:2px solid #ef4444}
-        .result-close{
-            margin-top:1.25rem;width:100%;background:#2563eb;color:white;border:0;
-            border-radius:7px;padding:.7rem 1rem;font-weight:700;cursor:pointer
-        }
-        .result-details{margin-top:1rem;padding:1rem;background:#111827;border:1px solid #374151;border-radius:8px;text-align:left}
-    </style>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-gray-900 text-gray-100 min-h-screen p-8">
     <div class="max-w-4xl mx-auto">
+
         <nav class="flex justify-between items-center mb-6 bg-gray-800 p-4 rounded-lg border border-gray-700 shadow">
             <div class="flex space-x-4">
-                <a href="/" class="text-blue-400 font-semibold tip" data-tip="Return to the loan application form.">Home</a>
-                <a href="/dashboard" class="text-gray-300 hover:text-white transition tip" data-tip="View model performance, classification analysis and model visualisations.">Model Dashboard</a>
-                <a href="/model" class="text-gray-300 hover:text-white transition tip" data-tip="Inspect sample data, model features and retraining controls.">Model Details</a>
-                <a href="/api" class="text-gray-300 hover:text-white transition tip" data-tip="View the REST API endpoint registry and endpoint status.">API Status</a>
-                <a href="/logs" class="text-gray-300 hover:text-white transition tip" data-tip="View application, model, HTTP and error logs.">Application Logs</a>
+                <a href="/" class="text-blue-400 font-semibold">Home</a>
+                <a href="/dashboard" class="text-gray-300 hover:text-white transition">Model Dashboard</a>
+                <a href="/model" class="text-gray-300 hover:text-white transition">Model Details</a>
+                <a href="/api" class="text-gray-300 hover:text-white transition">API Status</a>
+                <a href="/logs" class="text-gray-300 hover:text-white transition">Application Logs</a>
             </div>
-
         </nav>
 
         <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
             <h1 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">Loan Application Assessment</h1>
 
-            <form id="loan-form" class="space-y-4 tip" data-tip="Complete all required fields and submit the application for model evaluation.">
+            <form id="loan-form" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Person Income</label>
-                        <input type="number" name="person_income" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white tip" data-tip="Applicant annual income used by the model." placeholder="50000">
+                        <input type="number" name="person_income" required
+                               class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+                               placeholder="50000">
                     </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Loan Amount</label>
-                        <input type="number" name="loan_amnt" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white tip" data-tip="Amount of the requested loan." placeholder="10000">
+                        <input type="number" name="loan_amnt" required
+                               class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+                               placeholder="10000">
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Loan Interest Rate (%)</label>
-                        <input type="number" step="0.1" name="loan_int_rate" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white tip" data-tip="Interest rate applied to the requested loan." placeholder="11.5">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Credit History</label>
+                        <input type="number" step="0.1" name="cb_person_cred_hist_length" required
+                               class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+                               placeholder="5">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Loan Percent Income</label>
-                        <input type="number" step="0.01" name="loan_percent_income" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white tip" data-tip="Loan amount expressed as a proportion of applicant income." placeholder="0.20">
-                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Credit Score</label>
-                        <input type="number" name="credit_score" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white tip" data-tip="Applicant credit score supplied to the model." placeholder="700">
+                        <input type="number" name="credit_score" required
+                               class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+                               placeholder="700">
                     </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Home Ownership</label>
-                        <select name="person_home_ownership" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white tip" data-tip="Applicant home-ownership category.">
+                        <select name="person_home_ownership"
+                                class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
                             <option value="RENT">RENT</option>
                             <option value="MORTGAGE">MORTGAGE</option>
                             <option value="OWN">OWN</option>
                             <option value="OTHER">OTHER</option>
                         </select>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Previous Loan Defaults on File</label>
-                    <select name="previous_loan_defaults_on_file" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white tip" data-tip="Whether previous loan defaults are recorded for the applicant.">
-                        <option value="No">No</option>
-                        <option value="Yes">Yes</option>
-                    </select>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Previous Loan</label>
+                        <select name="previous_loan_defaults_on_file"
+                                class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200 mt-4 tip" data-tip="Submit the application to the trained model and display the approval decision and decision margin.">
+                <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200 mt-4">
                     Submit Application
                 </button>
             </form>
 
-            <div id="result-container" class="mt-6"></div>
-        </div>
-    </div>
-
-
-    <div id="result-modal" class="result-modal hidden" onclick="closeResultModal(event)">
-        <div class="result-box" onclick="event.stopPropagation()">
-            <div id="result-icon" class="result-icon approved">✓</div>
-            <h2 id="result-title" class="text-2xl font-bold">Loan Approved</h2>
-            <p id="result-message" class="text-gray-300 mt-2">The model approved this application.</p>
-            <div id="result-details" class="result-details"></div>
-            <button class="result-close tip" data-tip="Close this result and return to the application form." onclick="closeResultModal()">Close</button>
+            <!-- Loan decision modal -->
+            <div id="result-modal"
+                 class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="result-title">
+                <div class="w-full max-w-md bg-gray-800 rounded-xl border border-gray-700 shadow-2xl p-8 text-center">
+                    <div id="result-icon"
+                         class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full text-5xl font-bold">
+                    </div>
+                    <h2 id="result-title" class="text-3xl font-bold mb-3"></h2>
+                    <div class="space-y-2 text-sm text-gray-300 mb-6">
+                        <p id="result-code"></p>
+                        <p id="result-margin"></p>
+                    </div>
+                    <button type="button" id="close-result"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200"
+                            title="Close the loan decision popup">
+                        Close
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        function closeResultModal(event) {
-            if (!event || event.target.id === 'result-modal') {
-                document.getElementById('result-modal').classList.add('hidden');
+        const form = document.getElementById('loan-form');
+        const modal = document.getElementById('result-modal');
+        const resultIcon = document.getElementById('result-icon');
+        const resultTitle = document.getElementById('result-title');
+        const resultCode = document.getElementById('result-code');
+        const resultMargin = document.getElementById('result-margin');
+        const closeResult = document.getElementById('close-result');
+
+        function closeResultModal() {
+            modal.classList.add('hidden');
+        }
+
+        closeResult.addEventListener('click', closeResultModal);
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeResultModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeResultModal();
             }
-        }
+        });
 
-        function showResultPopup(result) {
-            /*
-             * Model class mapping:
-             * 0 = Denied
-             * 1 = Approved
-             *
-             * prediction_code is used as the authoritative value so
-             * the popup cannot display a decision that contradicts the code.
-             */
-            const predictionCode = Number(result.prediction_code);
-            const approved = predictionCode === 1;
-
-            const icon = document.getElementById('result-icon');
-            const title = document.getElementById('result-title');
-            const message = document.getElementById('result-message');
-            const details = document.getElementById('result-details');
-
-            icon.className = `result-icon ${approved ? 'approved' : 'denied'}`;
-            icon.textContent = approved ? '✓' : '✕';
-
-            title.textContent = approved ? 'Loan Approved' : 'Loan Denied';
-            title.className =
-                `text-2xl font-bold ${approved ? 'text-green-400' : 'text-red-400'}`;
-
-            message.textContent = approved
-                ? 'The model approved this application.'
-                : 'The model denied this application.';
-
-            const margin = Number(result.margin);
-
-            details.innerHTML = `
-                <p class="text-lg font-semibold">
-                    Status:
-                    <span class="${approved ? 'text-green-400' : 'text-red-400'}">
-                        ${approved ? 'Approved' : 'Denied'}
-                    </span>
-                </p>
-                <p class="text-sm text-gray-300 mt-2">
-                    Prediction Code:
-                    <span class="font-mono">${predictionCode}</span>
-                    (${approved ? 'Approved = 1' : 'Denied = 0'})
-                </p>
-                <p class="text-sm text-gray-300 mt-2">
-                    Decision Margin:
-                    <span class="font-mono">
-                        ${Number.isFinite(margin) ? margin.toFixed(4) : 'N/A'}
-                    </span>
-                </p>
-            `;
-
-            document.getElementById('result-modal').classList.remove('hidden');
-        }
-
-        document.getElementById('loan-form').addEventListener('submit', async function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const form = this;
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalText = submitButton.textContent;
-            submitButton.disabled = true;
-            submitButton.textContent = 'Submitting...';
-
             try {
-                const formData = new FormData(form);
-                const response = await fetch('/margin', { method: 'POST', body: formData });
+                const response = await fetch('/margin', {
+                    method: 'POST',
+                    body: new FormData(this)
+                });
+
                 const result = await response.json();
 
-                if (!response.ok || result.status !== 'success') {
-                    throw new Error(result.message || 'Unable to evaluate the application.');
+                if (result.status === 'success') {
+                    const predictionCode = Number(result.prediction_code);
+
+                    if (predictionCode !== 0 && predictionCode !== 1) {
+                        throw new Error(
+                            `Unexpected prediction code returned by the model: ${result.prediction_code}`
+                        );
+                    }
+
+                    const approved = predictionCode === 1;
+
+                    resultIcon.textContent = approved ? '✓' : '✕';
+                    resultIcon.className =
+                        `mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full text-5xl font-bold ${
+                            approved
+                                ? 'bg-green-900 text-green-400 border-2 border-green-500'
+                                : 'bg-red-900 text-red-400 border-2 border-red-500'
+                        }`;
+
+                    resultTitle.textContent = approved ? 'Loan Approved' : 'Loan Denied';
+                    resultTitle.className =
+                        `text-3xl font-bold mb-3 ${approved ? 'text-green-400' : 'text-red-400'}`;
+
+                    resultCode.textContent =
+                        `Prediction Code: ${predictionCode} (${approved ? 'Approved' : 'Denied'})`;
+                    resultMargin.textContent =
+                        `Decision Margin: ${Number(result.margin).toFixed(4)}`;
+                } else {
+                    resultIcon.textContent = '!';
+                    resultIcon.className =
+                        'mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full text-5xl font-bold bg-red-900 text-red-400 border-2 border-red-500';
+                    resultTitle.textContent = 'Assessment Error';
+                    resultTitle.className = 'text-3xl font-bold mb-3 text-red-400';
+                    resultCode.textContent = result.message || 'Unable to assess the application.';
+                    resultMargin.textContent = '';
                 }
 
-                showResultPopup(result);
+                modal.classList.remove('hidden');
+                closeResult.focus();
+
             } catch (err) {
-                const resultModal = document.getElementById('result-modal');
-                const icon = document.getElementById('result-icon');
-                document.getElementById('result-title').textContent = 'Assessment Error';
-                document.getElementById('result-title').className = 'text-2xl font-bold text-red-400';
-                document.getElementById('result-message').textContent = err.message;
-                icon.className = 'result-icon denied';
-                icon.textContent = '✕';
-                document.getElementById('result-details').innerHTML = '';
-                resultModal.classList.remove('hidden');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = originalText;
+                resultIcon.textContent = '!';
+                resultIcon.className =
+                    'mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full text-5xl font-bold bg-red-900 text-red-400 border-2 border-red-500';
+                resultTitle.textContent = 'Connection Error';
+                resultTitle.className = 'text-3xl font-bold mb-3 text-red-400';
+                resultCode.textContent = 'Failed to connect to backend server.';
+                resultMargin.textContent = '';
+
+                modal.classList.remove('hidden');
+                closeResult.focus();
             }
         });
     </script>
