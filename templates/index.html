@@ -168,7 +168,7 @@
                     resultCode.textContent =
                         `Prediction Code: ${predictionCode} (${approved ? 'Approved' : 'Denied'})`;
                     resultMargin.textContent =
-                        `Decision Margin: ${Number(result.margin).toFixed(4)}`;
+                        `Decision Margin: ${Number(result.margin).toFixed(4)} (${Number(result.margin) >= 0 ? "Approved side" : "Denied side"} of 0)`;
                 } else {
                     resultIcon.textContent = '!';
                     resultIcon.className =

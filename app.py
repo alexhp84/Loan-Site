@@ -845,7 +845,7 @@ def calculate_margin():
               description: "Denied or Approved"
             margin:
               type: number
-              description: Underlying SVC decision-function score
+              description: Underlying SVC decision-function score; values below 0 are Denied and values 0 or above are Approved
             probabilities:
               type: array
               items:
@@ -866,8 +866,6 @@ def calculate_margin():
             payload = pickle.load(f)
 
         pipeline = payload["pipeline"]
-
-        prediction = int(pipeline.predict(input_df)[0])
 
         # The trained pipeline uses CalibratedClassifierCV around SVC.
         # The underlying fitted SVC provides the SVC decision margin.
@@ -890,6 +888,8 @@ def calculate_margin():
         classes = list(getattr(pipeline, "classes_", []))
         if classes and set(classes) != {0, 1}:
             raise ValueError(f"Model classes are {classes}; expected [0, 1].")
+
+        prediction = 1 if margin_score >= 0 else 0
 
         log_model_event(
             f"Margin evaluated: Input={filtered_data} Code={prediction} Margin={margin_score:.4f}"
@@ -958,7 +958,7 @@ def api_status():
         {
             "endpoint": "/margin",
             "method": "POST",
-            "description": "Calculate decision margin and classification",
+            "description": "Calculate decision margin and classify: below 0 Denied, 0 or above Approved",
             "status": "Online" if model_loaded else "Disabled",
         },
         {
