@@ -125,14 +125,14 @@
         function showResultPopup(result) {
             /*
              * Model class mapping:
-             * 0 = Approved
-             * 1 = Denied
+             * 0 = Denied
+             * 1 = Approved
              *
              * prediction_code is used as the authoritative value so
              * the popup cannot display a decision that contradicts the code.
              */
             const predictionCode = Number(result.prediction_code);
-            const approved = predictionCode === 0;
+            const approved = predictionCode === 1;
 
             const icon = document.getElementById('result-icon');
             const title = document.getElementById('result-title');
@@ -162,7 +162,7 @@
                 <p class="text-sm text-gray-300 mt-2">
                     Prediction Code:
                     <span class="font-mono">${predictionCode}</span>
-                    (${approved ? 'Approved = 0' : 'Denied = 1'})
+                    (${approved ? 'Approved = 1' : 'Denied = 0'})
                 </p>
                 <p class="text-sm text-gray-300 mt-2">
                     Decision Margin:
